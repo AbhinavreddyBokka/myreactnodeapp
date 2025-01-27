@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-application
+  namespace: argocd # Ensure this matches the namespace where Argo CD is installed
+spec:
+  project: default # Argo CD project (default unless custom projects are configured)
+  source:
+    repoURL: https://github.com/your-repo/your-k8s-manifests.git # Replace with your Git repository
+    targetRevision: main # Branch or tag (e.g., "main", "v1.0.0")
+    path: k8s-manifests # Path inside the repo containing Kubernetes manifests
+  destination:
+    server: https://kubernetes.default.svc # Cluster to deploy to (leave default for the same cluster)
+    namespace: default # Namespace to deploy the resources
+  syncPolicy:
+    automated:
+      prune: true # Automatically delete resources removed from the Git repository
+      selfHeal: true # Automatically sync if drift is detected
+      #hello

@@ -1,0 +1,68 @@
+# React Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-frontend
+  labels:
+    app: react-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: react-frontend
+  template:
+    metadata:
+      labels:
+        app: react-frontend
+    spec:
+      containers:
+        - name: react-frontend
+          image: my-react-app:1.0 # Replace with your Docker image
+          ports:
+            - containerPort: 80
+          env:
+            - name: REACT_APP_BACKEND_URL
+              value: "http://node-backend-service:3000" # Backend Service URL
+
+---
+# React Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: react-frontend-service
+  labels:
+    app: react-frontend
+spec:
+  selector:
+    app: react-frontend
+  ports:
+    - protocol: TCP
+      port: 80       # External port
+      targetPort: 80 # Port on the React container
+  type: ClusterIP
+
+---
+# Ingress Resource for ALB
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: react-frontend-ingress
+  annotations:
+    kubernetes.io/ingress.class: "alb" # Specify the ALB controller
+    alb.ingress.kubernetes.io/scheme: "internet-facing" # Publicly accessible ALB
+    alb.ingress.kubernetes.io/target-type: "ip" # Forward traffic directly to Pods
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]' # ALB listening on HTTP
+  labels:
+    app: react-frontend
+spec:
+  rules:
+    - host: <your-domain-or-alb-hostname> # Replace with your domain or leave blank for default
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: react-frontend-service
+                port:
+                  number: 80
